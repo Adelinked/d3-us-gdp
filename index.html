@@ -96,8 +96,6 @@
           const data = await responce.json();
           const d = new Date();
 
-          //const dataset = (data.data).map(d=>[d[0],d[1]]);
-
           const dataset = data.data;
           const w = 1000;
           const h = 500;
@@ -146,13 +144,6 @@
             .attr("class", "svg")
             .attr("id", "svg")
             .attr("onmouseover", "onMouseOver()");
-
-          /*svg.onclick = function (event) {
-            // show event type, element and coordinates of the click
-            alert(event.type + " at " + event.currentTarget);
-            alert("Coordinates: " + event.clientX + ":" + event.clientY);
-          };*/
-          // svg.addEventListener("click", () => alert("1"));
 
           const xAxis = d3.axisBottom(xScale);
           const yAxis = d3.axisLeft(yScale);
