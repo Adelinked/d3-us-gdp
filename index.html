@@ -1,0 +1,190 @@
+<html>
+  <head>
+    <script src="../d3/d3.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: gray;
+        position: relative;
+        font-weight: 600;
+      }
+      .svg {
+        background-color: rgb(202, 208, 221);
+      }
+      .svg:hover #title {
+        border: 1px black solid;
+      }
+      .title {
+        padding: 20px 0;
+        text-align: center;
+      }
+      .bar:hover {
+        fill: cyan;
+      }
+
+      .content {
+        padding: 20px;
+        background-color: white;
+      }
+      #tooltip {
+        width: 120px;
+        height: 45px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        background-color: rgb(143, 160, 197);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.5s;
+        position: absolute;
+        top: 0;
+        left: 0;
+        box-shadow: 1px 1px 10px black;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1 id="title" class="title">GDP of the United States</h1>
+      <div id="tooltip"></div>
+      <script>
+        const quarter = (month) => {
+          if (month <= 3) return "Q1";
+          if (month <= 6) return "Q2";
+          if (month <= 9) return "Q3";
+          if (month <= 12) return "Q4";
+        };
+        let display = false;
+        function onMouseOver() {
+          if (event.target.tagName == "rect") {
+            display = true;
+            const date = new Date(event.target.getAttribute("data-date"));
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const gdp = event.target.getAttribute("data-gdp");
+            const nfObject = new Intl.NumberFormat("en-US");
+            const formatedGdp = nfObject.format(gdp);
+
+            tooltip.innerHTML = `<p>${year + " " + quarter(month)}</p><p>${
+              "$ " + formatedGdp + " Billon"
+            }</p>`;
+
+            tooltip.style.top =
+              event.target.parentElement.getAttribute("height") - 50;
+            tooltip.style.left = event.clientX + 20;
+            tooltip.style.opacity = "0.9";
+          } else {
+            tooltip.style.opacity = "0";
+          }
+        }
+
+        (async () => {
+          const responce = await fetch(
+            "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json"
+          );
+          const data = await responce.json();
+          const d = new Date();
+
+          //const dataset = (data.data).map(d=>[d[0],d[1]]);
+
+          const dataset = data.data;
+          const w = 1000;
+          const h = 500;
+          const padding = 50;
+
+          const xMin =
+            new Date(d3.min(dataset, (d) => d[0])).getFullYear() +
+            new Date(d3.min(dataset, (d) => d[0])).getMonth() / 12;
+          const xMax =
+            new Date(d3.max(dataset, (d) => d[0])).getFullYear() +
+            new Date(d3.max(dataset, (d) => d[0])).getMonth() / 12;
+
+          const xScale2 = (w - padding) / (xMax - xMin);
+
+          const representDate = (date) => {
+            return (
+              (new Date(date).getFullYear() + new Date(date).getMonth() / 12) *
+              xScale2
+            );
+          };
+
+          const len = dataset.length;
+
+          const repX = (i) => {
+            return padding + ((w - 2 * padding) * i) / len;
+          };
+
+          const xScale = d3
+            .scaleLinear()
+            .domain([xMin, xMax])
+            .range([padding, w - padding]);
+
+          const yMax = d3.max(dataset, (d) => d[1]);
+          const yScale = d3
+            .scaleLinear()
+            .domain([0, yMax])
+            .range([h - padding, padding]);
+
+          const yScale2 = (h - 2 * padding) / yMax;
+
+          const svg = d3
+            .select("div")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+            .attr("class", "svg")
+            .attr("id", "svg")
+            .attr("onmouseover", "onMouseOver()");
+
+          /*svg.onclick = function (event) {
+            // show event type, element and coordinates of the click
+            alert(event.type + " at " + event.currentTarget);
+            alert("Coordinates: " + event.clientX + ":" + event.clientY);
+          };*/
+          // svg.addEventListener("click", () => alert("1"));
+
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+
+          svg
+            .append("g")
+            .attr("id", "x-Axis")
+            .attr("transform", "translate(0," + (h - padding) + ")")
+            .call(xAxis);
+
+          svg
+            .append("g")
+            .attr("id", "y-Axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yAxis);
+
+          svg
+            .selectAll("rect")
+            .data(dataset)
+            .enter()
+            .append("rect")
+            .attr("data-date", (d) => d[0])
+            .attr("data-gdp", (d) => d[1])
+            .attr("data", (d) => d)
+            .attr("x", (d, i) => repX(i))
+            .attr("y", (d, i) => h - padding - d[1] * yScale2)
+            .attr("width", 3)
+            .attr("height", (d, i) => d[1] * yScale2)
+            .attr("fill", "navy")
+            .attr("class", "bar");
+        })();
+      </script>
+    </div>
+  </body>
+</html>
