@@ -13,7 +13,6 @@
         justify-content: center;
         align-items: center;
         background-color: gray;
-        position: relative;
         font-weight: 600;
       }
       .svg {
@@ -34,6 +33,7 @@
         padding: 20px;
         background-color: white;
         box-shadow: 1px 1px 10px black;
+        position: relative;
       }
       #tooltip {
         width: 120px;
@@ -42,9 +42,7 @@
         border-radius: 5px;
         background-color: rgb(143, 160, 197);
         text-align: center;
-        visibility: hidden;
-        opacity: 0;
-        transition: visibility 0s linear 200ms, opacity 200ms;
+        transition: opacity 200ms;
         position: absolute;
         top: 0;
         left: 0;
@@ -53,9 +51,9 @@
     </style>
   </head>
   <body>
-    <div class="content">
+    <div class="content" id="container">
       <h1 id="title" class="title">GDP of the United States</h1>
-      <div id="tooltip"></div>
+      <!--<div id="tooltip"></div>-->
 
       <script>
         const quarter = (month) => {
@@ -89,10 +87,8 @@
               tooltip.style.left = event.clientX + 20;
             }
             tooltip.style.opacity = "0.9";
-            tooltip.style.visibility = "visible";
           } else {
             tooltip.style.opacity = "0";
-            tooltip.style.visibility = "hidden";
           }
         }
 
@@ -146,6 +142,11 @@
             .attr("class", "svg")
             .attr("id", "svg")
             .attr("onmouseover", "onMouseOver()");
+
+          d3.select("div")
+            .append("div")
+            .attr("id", "tooltip")
+            .style("opacity", "0");
 
           const xAxis = d3.axisBottom(xScale);
           const yAxis = d3.axisLeft(yScale);
