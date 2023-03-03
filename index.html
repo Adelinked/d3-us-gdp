@@ -33,20 +33,18 @@
       .content {
         padding: 20px;
         background-color: white;
+        box-shadow: 1px 1px 10px black;
       }
       #tooltip {
         width: 120px;
-        height: 45px;
+        height: 40px;
         padding: 5px 10px;
         border-radius: 5px;
         background-color: rgb(143, 160, 197);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-evenly;
         text-align: center;
+        visibility: hidden;
         opacity: 0;
-        transition: opacity 0.5s;
+        transition: visibility 0s linear 200ms, opacity 200ms;
         position: absolute;
         top: 0;
         left: 0;
@@ -58,6 +56,7 @@
     <div class="content">
       <h1 id="title" class="title">GDP of the United States</h1>
       <div id="tooltip"></div>
+
       <script>
         const quarter = (month) => {
           if (month <= 3) return "Q1";
@@ -65,27 +64,35 @@
           if (month <= 9) return "Q3";
           if (month <= 12) return "Q4";
         };
-        let display = false;
         function onMouseOver() {
-          if (event.target.tagName == "rect") {
-            display = true;
-            const date = new Date(event.target.getAttribute("data-date"));
+          const element = event.target;
+          if (element.tagName == "rect") {
+            const data = JSON.parse(element.getAttribute("data"));
+            const barDate = data[0];
+            const date = new Date(barDate);
             const year = date.getFullYear();
             const month = date.getMonth() + 1;
-            const gdp = event.target.getAttribute("data-gdp");
+            const gdp = data[1];
             const nfObject = new Intl.NumberFormat("en-US");
             const formatedGdp = nfObject.format(gdp);
 
+            tooltip.setAttribute("data-date", barDate);
             tooltip.innerHTML = `<p>${year + " " + quarter(month)}</p><p>${
               "$ " + formatedGdp + " Billon"
             }</p>`;
+            const svg = element.parentElement;
+            tooltip.style.top = svg.getAttribute("height") - 50;
 
-            tooltip.style.top =
-              event.target.parentElement.getAttribute("height") - 50;
-            tooltip.style.left = event.clientX + 20;
+            if (event.clientX > svg.getAttribute("width") - 100) {
+              tooltip.style.left = event.clientX - 160;
+            } else {
+              tooltip.style.left = event.clientX + 20;
+            }
             tooltip.style.opacity = "0.9";
+            tooltip.style.visibility = "visible";
           } else {
             tooltip.style.opacity = "0";
+            tooltip.style.visibility = "hidden";
           }
         }
 
@@ -101,13 +108,8 @@
           const h = 500;
           const padding = 50;
 
-          const xMin =
-            new Date(d3.min(dataset, (d) => d[0])).getFullYear() +
-            new Date(d3.min(dataset, (d) => d[0])).getMonth() / 12;
-          const xMax =
-            new Date(d3.max(dataset, (d) => d[0])).getFullYear() +
-            new Date(d3.max(dataset, (d) => d[0])).getMonth() / 12;
-
+          const xMin = d3.min(dataset, (d) => new Date(d[0]));
+          const xMax = d3.max(dataset, (d) => new Date(d[0]));
           const xScale2 = (w - padding) / (xMax - xMin);
 
           const representDate = (date) => {
@@ -117,14 +119,14 @@
             );
           };
 
-          const len = dataset.length;
+          const len = dataset.length - 1;
 
           const repX = (i) => {
-            return padding + ((w - 2 * padding) * i) / len;
+            return Math.floor(padding + ((w - 2 * padding) * i) / len);
           };
 
           const xScale = d3
-            .scaleLinear()
+            .scaleTime()
             .domain([xMin, xMax])
             .range([padding, w - padding]);
 
@@ -165,17 +167,18 @@
             .data(dataset)
             .enter()
             .append("rect")
-            .attr("data-date", (d) => d[0])
+            .attr("data-date", (d, i) => d[0])
             .attr("data-gdp", (d) => d[1])
-            .attr("data", (d) => d)
+            .attr("data", (d) => JSON.stringify(d))
             .attr("x", (d, i) => repX(i))
             .attr("y", (d, i) => h - padding - d[1] * yScale2)
-            .attr("width", 3)
+            .attr("width", 2.8)
             .attr("height", (d, i) => d[1] * yScale2)
             .attr("fill", "navy")
             .attr("class", "bar");
         })();
       </script>
+      <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
     </div>
   </body>
 </html>
